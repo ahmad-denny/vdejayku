@@ -16,6 +16,17 @@ html,body{overflow-x:hidden}
 #frameB{opacity:0}
 .frame{visibility:visible}
 .sug{position:fixed;z-index:50;max-height:360px;overflow:auto;background:#0d131d;border:1px solid #304157;border-radius:10px;box-shadow:0 12px 30px #000a;display:none;font-size:12px}.sug>div{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer}.sug>div:hover{background:#1b2a40}.sug img{width:64px;height:36px;object-fit:cover;border-radius:4px;flex:none}.sug small{color:#8aa0b8}
+
+.wrap{max-width:1700px}
+.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 340px;gap:13px;align-items:start}
+.main>section,.decks{display:contents}
+.monitor{grid-column:1/-1;grid-row:1;margin-bottom:0}
+.deck:not(.b){grid-column:1;grid-row:2}
+.deck.b{grid-column:2;grid-row:2}
+.mixer{grid-column:1/3;grid-row:3;margin-top:0}
+.side{display:flex;flex-direction:column;grid-column:3;grid-row:2/4}
+@media(max-width:1100px){.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.deck:not(.b),.deck.b{grid-column:auto;grid-row:auto}.mixer{grid-column:1/-1;grid-row:auto}.side{grid-column:1/-1;grid-row:auto;display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.main{grid-template-columns:minmax(0,1fr)}.deck:not(.b),.deck.b,.mixer,.side{grid-column:1}.side{display:flex}}
 </style>
 </head><body><div class="wrap" id="app">
 <header class="top"><div><div class="logo">YT <em>DUAL DECK</em> DJ / KARAOKE</div><div class="tagline">TWO VIDEO DECKS · PLAYLIST · CUE · CROSSFADE</div></div><div class="badge" id="apiStatus">YouTube API: memuat…</div></header>
