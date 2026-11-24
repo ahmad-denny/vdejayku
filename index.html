@@ -12,6 +12,9 @@ html,body{overflow-x:hidden}
 .side{display:grid;grid-template-columns:1fr 1fr;align-items:start}
 .list{max-height:360px}
 @media(max-width:700px){.side{grid-template-columns:1fr}}
+#frameA{opacity:1}
+#frameB{opacity:0}
+.frame{visibility:visible}
 </style>
 </head><body><div class="wrap" id="app">
 <header class="top"><div><div class="logo">YT <em>DUAL DECK</em> DJ / KARAOKE</div><div class="tagline">TWO VIDEO DECKS · PLAYLIST · CUE · CROSSFADE</div></div><div class="badge" id="apiStatus">YouTube API: memuat…</div></header>
@@ -46,10 +49,10 @@ function sizeMonitorPlayers(){const screen=$('screen');if(!screen)return;if(docu
 function chooseMonitor(d){monitor=d;for(const x of ['A','B'])$('frame'+x).classList.toggle('active',x===d);$('placeholder').style.display=decks[d].loaded?'none':'grid';$('monitorDeck').textContent='MONITOR — DECK '+d;requestAnimationFrame(sizeMonitorPlayers);updateMonitor();syncTVOutput(true)}
 function updateMonitor(){$('monitorTrack').textContent=decks[monitor].loaded?'Deck '+monitor+' · '+decks[monitor].title:'Monitor standby';$('monitorState').textContent=decks[monitor].loaded?$('state'+monitor).textContent:'READY'}function setState(d,s){$('state'+d).textContent=s;updateMonitor()}
 function stateChanged(d,e){const names={'-1':'UNSTARTED',0:'ENDED',1:'PLAYING',2:'PAUSED',3:'BUFFERING',5:'CUED'};setState(d,names[e.data]||'READY');decks[d].playing=e.data===1;setPlayButton(d,e.data===1);if(e.data===1){try{const data=decks[d].player.getVideoData();if(data.title){decks[d].title=data.title;$('track'+d).textContent=data.title}}catch{}}updateMonitor()}
-const env={A:1,B:0},envT={A:1,B:0};let fadeTimer=null;
+const env={A:1,B:0},envT={A:1,B:0},vis={A:1,B:0},visT={A:1,B:0};let fadeTimer=null;
 function zoneTargets(x){if(x<=45)return{A:1,B:0};if(x>=55)return{A:0,B:1};return{A:.85,B:.85}}
-function applyAudio(){if(!apiReady)return;const t=zoneTargets(+$('cross').value);const c=decks.A.headCue?'A':decks.B.headCue?'B':null;if(c){const o=c==='A'?'B':'A';t[c]=1;t[o]=t[o]*0.15}envT.A=t.A;envT.B=t.B;if(!fadeTimer)fadeTimer=setInterval(fadeStep,40);fadeStep()}
-function fadeStep(){const v={A:+$('volA').value/100,B:+$('volB').value/100};let moving=false;for(const d of ['A','B']){const diff=envT[d]-env[d];if(Math.abs(diff)>0.001){env[d]+=Math.sign(diff)*Math.min(Math.abs(diff),0.08);moving=true}else env[d]=envT[d];try{decks[d].player?.setVolume(Math.round(env[d]*v[d]*100))}catch{}}if(!moving){clearInterval(fadeTimer);fadeTimer=null}}
+function applyAudio(){if(!apiReady)return;const t=zoneTargets(+$('cross').value);visT.A=t.A;visT.B=t.B;const c=decks.A.headCue?'A':decks.B.headCue?'B':null;if(c){const o=c==='A'?'B':'A';t[c]=1;t[o]=t[o]*0.15}envT.A=t.A;envT.B=t.B;if(!fadeTimer)fadeTimer=setInterval(fadeStep,40);fadeStep()}
+function fadeStep(){const v={A:+$('volA').value/100,B:+$('volB').value/100};let moving=false;for(const d of ['A','B']){const diff=envT[d]-env[d];if(Math.abs(diff)>0.001){env[d]+=Math.sign(diff)*Math.min(Math.abs(diff),0.08);moving=true}else env[d]=envT[d];try{decks[d].player?.setVolume(Math.round(env[d]*v[d]*100))}catch{}const dv=visT[d]-vis[d];if(Math.abs(dv)>0.001){vis[d]+=Math.sign(dv)*Math.min(Math.abs(dv),0.08);moving=true}else vis[d]=visT[d];$('frame'+d).style.opacity=vis[d]}if(!moving){clearInterval(fadeTimer);fadeTimer=null}}
 function cross(v){v=+v;const a=Math.round(100-v),b=Math.round(v);$('crossLabel').textContent='A '+a+'% · B '+b+'%'+(v>45&&v<55?' · MIX −15%':'');applyAudio();if(v<50)chooseMonitor('A');else chooseMonitor('B')}
 document.addEventListener('keydown',e=>{if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;if(e.altKey||e.metaKey||e.shiftKey)return;const t=e.target;if(t&&(t.tagName==='TEXTAREA'||t.tagName==='SELECT'||(t.tagName==='INPUT'&&t.id!=='cross')))return;e.preventDefault();const c=$('cross'),step=e.ctrlKey?2:5;c.value=Math.max(0,Math.min(100,+c.value+(e.key==='ArrowRight'?step:-step)));cross(c.value)});
 
