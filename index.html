@@ -38,6 +38,15 @@ html,body{overflow-x:hidden}
 .side>.playlist:last-child{flex:none}
 @media(max-width:1100px){.monitor{order:-2}.mixer{order:-1;grid-column:1/-1;grid-row:auto}.deck:not(.b),.deck.b{grid-column:auto;grid-row:auto}.side{contain:none;align-self:start;grid-column:1/-1;grid-row:auto;display:grid;grid-template-columns:1fr 1fr}.side>.playlist:first-child .list{flex:none;max-height:260px}}
 @media(max-width:700px){.deck:not(.b),.deck.b,.mixer,.side{grid-column:1}.side{display:flex}}
+
+:root{--px:16px}
+.wrap{max-width:none;padding:16px 0}
+.top{padding:0 var(--px)}
+.main{padding:0 var(--px);box-sizing:border-box;width:100%}
+.monitor{width:auto;max-width:none;margin:0 calc(-1 * var(--px))}
+.side,.side>.playlist,.playlist-body,.addrow,.list{min-width:0;max-width:100%;box-sizing:border-box}
+.side{width:100%;overflow:hidden}
+@media(max-width:700px){:root{--px:9px}.wrap{padding:9px 0}}
 </style>
 </head><body><div class="wrap" id="app">
 <header class="top"><div><div class="logo">YT <em>DUAL DECK</em> DJ / KARAOKE</div><div class="tagline">TWO VIDEO DECKS · PLAYLIST · CUE · CROSSFADE</div></div><div class="badge" id="apiStatus">YouTube API: memuat…</div></header>
