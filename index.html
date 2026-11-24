@@ -15,6 +15,7 @@ html,body{overflow-x:hidden}
 #frameA{opacity:1}
 #frameB{opacity:0}
 .frame{visibility:visible}
+.sug{position:fixed;z-index:50;max-height:360px;overflow:auto;background:#0d131d;border:1px solid #304157;border-radius:10px;box-shadow:0 12px 30px #000a;display:none;font-size:12px}.sug>div{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer}.sug>div:hover{background:#1b2a40}.sug img{width:64px;height:36px;object-fit:cover;border-radius:4px;flex:none}.sug small{color:#8aa0b8}
 </style>
 </head><body><div class="wrap" id="app">
 <header class="top"><div><div class="logo">YT <em>DUAL DECK</em> DJ / KARAOKE</div><div class="tagline">TWO VIDEO DECKS · PLAYLIST · CUE · CROSSFADE</div></div><div class="badge" id="apiStatus">YouTube API: memuat…</div></header>
@@ -39,10 +40,17 @@ function toggleHeadCue(d){if(!decks[d].loaded)return notify('Load track dulu unt
 const SEARCH_HOSTS=[{t:'i',u:'https://inv.nadeko.net'},{t:'i',u:'https://yewtu.be'},{t:'p',u:'https://pipedapi.kavin.rocks'},{t:'p',u:'https://pipedapi.adminforge.de'}];
 function decodeHtml(x){const t=document.createElement('textarea');t.innerHTML=x;return t.value}
 async function fetchJson(url){const c=new AbortController(),tm=setTimeout(()=>c.abort(),5000);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw 0;return await r.json()}finally{clearTimeout(tm)}}
-async function searchYouTube(q){let key='';try{key=localStorage.getItem('ytDjApiKey')||''}catch{}const e=encodeURIComponent(q);
-if(key){try{const j=await fetchJson('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=1&q='+e+'&key='+encodeURIComponent(key));const it=j.items&&j.items[0];if(it)return{id:it.id.videoId,title:decodeHtml(it.snippet.title)}}catch{}}
-for(const h of SEARCH_HOSTS){try{if(h.t==='i'){const j=await fetchJson(h.u+'/api/v1/search?type=video&q='+e);const it=Array.isArray(j)&&j.find(x=>x.videoId);if(it)return{id:it.videoId,title:it.title}}else{const j=await fetchJson(h.u+'/search?filter=videos&q='+e);const it=(j.items||[]).find(x=>x.url&&x.url.includes('v='));if(it)return{id:it.url.split('v=')[1].split('&')[0],title:it.title}}}catch{}}
-return null}
+async function searchList(q,n){let key='';try{key=localStorage.getItem('ytDjApiKey')||''}catch{}const e=encodeURIComponent(q),th=id=>'https://i.ytimg.com/vi/'+id+'/default.jpg';
+if(key){try{const j=await fetchJson('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults='+n+'&q='+e+'&key='+encodeURIComponent(key));const l=(j.items||[]).filter(x=>x.id&&x.id.videoId).map(x=>({id:x.id.videoId,title:decodeHtml(x.snippet.title),ch:decodeHtml(x.snippet.channelTitle||''),thumb:th(x.id.videoId)}));if(l.length)return l}catch{}}
+for(const h of SEARCH_HOSTS){try{let l=[];if(h.t==='i'){const j=await fetchJson(h.u+'/api/v1/search?type=video&q='+e);l=(Array.isArray(j)?j:[]).filter(x=>x.videoId).map(x=>({id:x.videoId,title:x.title,ch:x.author||'',thumb:th(x.videoId)}))}else{const j=await fetchJson(h.u+'/search?filter=videos&q='+e);l=(j.items||[]).filter(x=>x.url&&x.url.includes('v=')).map(x=>{const id=x.url.split('v=')[1].split('&')[0];return{id,title:x.title,ch:x.uploaderName||'',thumb:th(id)}})}if(l.length)return l.slice(0,n)}catch{}}
+return[]}
+async function searchYouTube(q){return(await searchList(q,1))[0]||null}
+const sugCache=new Map();let sugTimer=null,sugSeq=0,sugBox=null;
+function sugEl(){if(!sugBox){sugBox=document.createElement('div');sugBox.className='sug';document.body.appendChild(sugBox)}return sugBox}
+function sugHide(){if(sugBox)sugBox.style.display='none'}
+function sugShow(d,list,msg){const b=sugEl(),r=$('url'+d).getBoundingClientRect();b.style.left=r.left+'px';b.style.top=(r.bottom+4)+'px';b.style.width=Math.max(r.width,320)+'px';b.textContent='';if(!list.length){const m=document.createElement('div');m.textContent=msg;m.style.color='#8aa0b8';b.appendChild(m)}for(const it of list){const row=document.createElement('div'),im=document.createElement('img'),tx=document.createElement('span'),sm=document.createElement('small');im.src=it.thumb;im.alt='';tx.textContent=it.title;sm.textContent=it.ch;tx.appendChild(document.createElement('br'));tx.appendChild(sm);row.append(im,tx);row.addEventListener('mousedown',ev=>{ev.preventDefault();sugHide();if(loadDeck(d,it.id)){decks[d].title=it.title;$('url'+d).value=it.title;$('track'+d).textContent=it.title}});b.appendChild(row)}b.style.display='block'}
+for(const d of ['A','B']){const inp=$('url'+d);inp.addEventListener('input',()=>{const q=inp.value.trim();clearTimeout(sugTimer);if(q.length<3||videoId(q)){sugSeq++;sugHide();return}sugTimer=setTimeout(async()=>{const my=++sugSeq;let l=sugCache.get(q);if(!l){l=await searchList(q,6);if(l.length)sugCache.set(q,l)}if(my!==sugSeq||document.activeElement!==inp)return;let hasKey=false;try{hasKey=!!localStorage.getItem('ytDjApiKey')}catch{}sugShow(d,l,hasKey?'Tidak ada hasil':'Pencarian gratis tidak tersedia. Tekan LOAD untuk memasukkan API key.')},600)});inp.addEventListener('blur',()=>setTimeout(sugHide,150));inp.addEventListener('keydown',e=>{if(e.key==='Escape')sugHide();if(e.key==='Enter')sugHide()})}
+window.addEventListener('resize',sugHide);
 async function loadOrSearch(d){const raw=$('url'+d).value.trim();if(!raw)return notify('Ketik URL/ID atau judul lagu dulu');if(videoId(raw))return loadDeck(d);if(!apiReady)return notify('API YouTube masih memuat, coba sebentar lagi');
 $('track'+d).textContent='Mencari "'+raw+'"…';notify('Mencari di YouTube…');
 let r=await searchYouTube(raw);
